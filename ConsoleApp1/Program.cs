@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-using System.Text.RegularExpressions;
 
 namespace ConsoleApp1
 {
@@ -14,9 +9,8 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Введите путь до файла: ");
-
             //записывание путя до файла
+            Console.WriteLine("Введите путь до файла: ");
             string path = Console.ReadLine();
             string Content = null;
 
@@ -25,37 +19,64 @@ namespace ConsoleApp1
             {
                 Content = File.ReadAllText(path);
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 Console.WriteLine($"Возникла ошибка {ex}");
             }
 
-            //удаление лишних символов
-            var noPunctuationText = new string(Content.Where(c => !char.IsPunctuation(c)).ToArray());
-
-            //разделение на слова
-            string[] text = Regex.Split(noPunctuationText.Trim(), @"\s+");
-
-            //запись 10 самых часто встречаемых слов в словарь
-            Dictionary<string, int> dictionary = new Dictionary<string, int>();
-            for (int i = 0; i < text.Length; i++)
+            //нахождение 4 слов из текста
+            string[] strings = new string[4];
+            for (int i = 0; i < strings.Length; i++)
             {
-                if (dictionary.ContainsKey(text[i]))
-                {
-                    dictionary[text[i]]++;
-                }
-                else
-                {
-                    dictionary.Add(text[i], 1);
-                }
+                strings[i] = FindFirstWord(ref Content);
             }
 
-            //выборка 10 и вывод их в консоль
-            foreach (var pare in dictionary.OrderByDescending(x => x.Value).Take(10))
-            {
-                Console.WriteLine(pare.Key);
-            }
+            //замеры List
+            List<string> list = new List<string>();
+            Stopwatch listStopwatch = new Stopwatch();
+            listStopwatch.Start();
+            list.Add(strings[0]);
+            list.Add(strings[1]);
+            list.Add(strings[2]);
+            list.Add(strings[3]);
+            listStopwatch.Stop();
+            
+            //замеры LinkedList
+            LinkedList<string> linkedList = new LinkedList<string>();
+            Stopwatch linkedListStopwatch = new Stopwatch();
+            linkedListStopwatch.Start();
+            linkedList.AddFirst(strings[0]);
+            linkedList.AddLast(strings[1]);
+            linkedList.AddFirst(strings[2]);
+            linkedList.AddLast(strings[3]);
+            linkedListStopwatch.Stop();
+
+            //сравнение
+            Console.WriteLine($"Скорость записи list - {listStopwatch.Elapsed} Скорость записи LinkedList - {linkedListStopwatch.Elapsed}");
         }
+        public static string FindFirstWord(ref string text)
+        {
+            //находим индекс первого слова
+            string word = null;
+            int index = 0;
+            for (int i = 0; !Char.IsLetter(text[i]); i++)
+            {
+                index++;
+            }
+            int firrstIndex = index;
 
+            //записываем всё слово целиком
+            while (Char.IsLetter(text[index]))
+            {
+                word += text[index];
+                index++;
+            }
+
+            //удаляем это слово из текста
+            text = text.Remove(firrstIndex, index - firrstIndex);
+
+            //возращаем это слово
+            return word;
+        }
     }
 }
