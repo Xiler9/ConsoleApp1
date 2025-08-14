@@ -1,82 +1,74 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
+using System.Linq;
 
-namespace ConsoleApp1
+namespace PhoneBook
 {
-    internal class Program
+    class Program
     {
         static void Main(string[] args)
         {
-            //записывание путя до файла
-            Console.WriteLine("Введите путь до файла: ");
-            string path = Console.ReadLine();
-            string Content = null;
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            //чтение текста
-            try
+            //  создаём пустой список с типом данных Contact
+            var phoneBook = new List<Contact>();
+
+            // добавляем контакты
+            phoneBook.Add(new Contact("Игорь", "Николаев", 79990000001, "igor@example.com"));
+            phoneBook.Add(new Contact("Сергей", "Довлатов", 79990000010, "serge@example.com"));
+            phoneBook.Add(new Contact("Анатолий", "Карпов", 79990000011, "anatoly@example.com"));
+            phoneBook.Add(new Contact("Валерий", "Леонтьев", 79990000012, "valera@example.com"));
+            phoneBook.Add(new Contact("Сергей", "Брин", 799900000013, "serg@example.com"));
+            phoneBook.Add(new Contact("Иннокентий", "Смоктуновский", 799900000013, "innokentii@example.com"));
+
+            //сортировка
+            phoneBook
+                .OrderBy(x => x.Name)
+                .ThenBy(x => x.LastName);
+
+            while (true)
             {
-                Content = File.ReadAllText(path);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Возникла ошибка {ex}");
-            }
+                // Читаем введенный с консоли символ
+                var input = Console.ReadKey().KeyChar;
 
-            //нахождение 4 слов из текста
-            string[] strings = new string[4];
-            for (int i = 0; i < strings.Length; i++)
-            {
-                strings[i] = FindFirstWord(ref Content);
+                // проверяем, число ли это
+                var parsed = Int32.TryParse(input.ToString(), out int pageNumber);
+
+                // если не соответствует критериям - показываем ошибку
+                if (!parsed || pageNumber < 1 || pageNumber > 3)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Страницы не существует");
+                }
+                // если соответствует - запускаем вывод
+                else
+                {
+                    // пропускаем нужное количество элементов и берем 2 для показа на странице
+                    var pageContent = phoneBook.Skip((pageNumber - 1) * 2).Take(2);
+                    Console.WriteLine();
+
+                    // выводим результат
+                    foreach (var entry in pageContent)
+                        Console.WriteLine(entry.Name + " " + entry.LastName + ": " + entry.PhoneNumber);
+
+                    Console.WriteLine();
+                }
             }
-
-            //замеры List
-            List<string> list = new List<string>();
-            Stopwatch listStopwatch = new Stopwatch();
-            listStopwatch.Start();
-            list.Add(strings[0]);
-            list.Add(strings[1]);
-            list.Add(strings[2]);
-            list.Add(strings[3]);
-            listStopwatch.Stop();
-            
-            //замеры LinkedList
-            LinkedList<string> linkedList = new LinkedList<string>();
-            Stopwatch linkedListStopwatch = new Stopwatch();
-            linkedListStopwatch.Start();
-            linkedList.AddFirst(strings[0]);
-            linkedList.AddLast(strings[1]);
-            linkedList.AddFirst(strings[2]);
-            linkedList.AddLast(strings[3]);
-            linkedListStopwatch.Stop();
-
-            //сравнение
-            Console.WriteLine($"Скорость записи list - {listStopwatch.Elapsed} Скорость записи LinkedList - {linkedListStopwatch.Elapsed}");
         }
-        public static string FindFirstWord(ref string text)
+    }
+    public class Contact // модель класса
+    {
+        public Contact(string name, string lastName, long phoneNumber, String email) // метод-конструктор
         {
-            //находим индекс первого слова
-            string word = null;
-            int index = 0;
-            for (int i = 0; !Char.IsLetter(text[i]); i++)
-            {
-                index++;
-            }
-            int firrstIndex = index;
-
-            //записываем всё слово целиком
-            while (Char.IsLetter(text[index]))
-            {
-                word += text[index];
-                index++;
-            }
-
-            //удаляем это слово из текста
-            text = text.Remove(firrstIndex, index - firrstIndex);
-
-            //возращаем это слово
-            return word;
+            Name = name;
+            LastName = lastName;
+            PhoneNumber = phoneNumber;
+            Email = email;
         }
+
+        public String Name { get; }
+        public String LastName { get; }
+        public long PhoneNumber { get; }
+        public String Email { get; }
     }
 }
